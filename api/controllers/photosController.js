@@ -1,4 +1,4 @@
-const multer = require("multer");
+const sharp = require("sharp");
 
 const getName = function (str) {
   return str.split("\\").pop().split("/").pop();
@@ -39,6 +39,14 @@ exports.getPhotos = async (req, res) => {
 };
 
 exports.uploadPhotos = (req, res) => {
-  console.log(req.file, req.body);
+  console.log("File was: ", req.files);
+
+  req?.files?.map((file) => {
+    sharp(file.path)
+      .resize(250, 250)
+      .toFile("uploads/thumb/thumb_" + file.filename, (err, info) => {
+        console.log("Sharp: ", { err, info });
+      });
+  });
   res.status(200).json({ message: "Please select file first" });
 };
