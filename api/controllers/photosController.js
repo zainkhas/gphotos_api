@@ -1,4 +1,5 @@
 const sharp = require("sharp");
+const { THUMBNAIL_PATH, UPLOAD_PATH } = require("../../config");
 
 const getName = function (str) {
   return str.split("\\").pop().split("/").pop();
@@ -11,7 +12,7 @@ const getPhotosFromDisk = () => {
     var getDirectories = function (src, callback) {
       glob(src + "/**/*", callback);
     };
-    getDirectories("public/uploads", function (err, res) {
+    getDirectories(UPLOAD_PATH, function (err, res) {
       if (err) {
         console.log("Error", err);
         reject(err);
@@ -20,10 +21,8 @@ const getPhotosFromDisk = () => {
 
         res?.map((image) => {
           finalArr.push({
-            img: image?.replace("public", ""),
-            title: getName(image),
-            author: "Zain",
-            cols: 2,
+            url: image?.replace("public", ""),
+            fileName: getName(image),
           });
         });
         console.log(finalArr);
@@ -44,9 +43,10 @@ exports.uploadPhotos = (req, res) => {
   req?.files?.map((file) => {
     sharp(file.path)
       .resize(250, 250)
-      .toFile("uploads/thumb/thumb_" + file.filename, (err, info) => {
+      .withMetadata()
+      .toFile(THUMBNAIL_PATH + "/thumb_" + file.filename, (err, info) => {
         console.log("Sharp: ", { err, info });
       });
   });
-  res.status(200).json({ message: "Please select file first" });
+  res.status(200).json({ message: "Images uploaded!" });
 };
