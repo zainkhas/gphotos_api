@@ -1,17 +1,4 @@
 const router = require("express").Router();
-const multer = require("multer");
-const path = require("path");
-const { UPLOAD_PATH } = require("../config");
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, UPLOAD_PATH);
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + path.extname(file.originalname)); //Appending extension
-  },
-});
-
-const upload = multer({ storage });
 
 const photosController = require("./controllers/photosController");
 
@@ -22,11 +9,19 @@ router.get("/", (req, res) => {
 });
 
 //Photos
+
+//List all Photo URLs
 router.post("/photos", photosController.getPhotos);
+
+//Upload multiple photos
 router.post(
   "/photos/upload",
-  upload.array("photos", 50),
-  photosController.uploadPhotos
+  photosController.createDirectories,
+  photosController.uploadPhotos,
+  photosController.generateThumbnailsAndExif
 );
+
+//Delete all photos and thumbnails
+router.post("/deleteAll", photosController.deleteAll);
 
 module.exports = router;
