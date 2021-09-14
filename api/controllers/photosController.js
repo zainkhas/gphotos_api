@@ -39,7 +39,7 @@ const fileFilter = (req, file, callback) => {
 };
 
 exports.getPhotos = async (req, res) => {
-  let arrPhotos = await getPhotosFromDisk(UPLOAD_PATH);
+  let arrPhotos = await Photo.find({});
   res.send(JSON.stringify(arrPhotos));
 };
 
