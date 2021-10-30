@@ -16,6 +16,10 @@ const PhotoSchema = new Schema(
       type: String,
       required: false,
     },
+    trashed: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

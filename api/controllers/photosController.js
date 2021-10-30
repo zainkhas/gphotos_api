@@ -15,6 +15,8 @@ const path = require("path");
 const Photo = require("../models/photoModel");
 import moment from "moment";
 import { existsSync } from "fs";
+import { STATUS_CODES } from "../STATUS_CODES";
+import mongoose from "mongoose";
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -39,7 +41,9 @@ const fileFilter = (req, file, callback) => {
 };
 
 exports.getPhotos = async (req, res) => {
-  let arrPhotos = await Photo.find({});
+  let arrPhotos = await Photo.find({
+    trashed: false,
+  });
   res.send(JSON.stringify(arrPhotos));
 };
 
@@ -98,7 +102,9 @@ exports.generateThumbnailsAndExif = async (req, res) => {
     res.json({ message: "Images uploaded!" });
   } catch (error) {
     console.log("Error: ", error);
-    res.status(500).json({ message: "Something went wrong" });
+    res
+      .status(STATUS_CODES.SERVER_ERROR)
+      .json({ message: "Something went wrong" });
   }
 };
 
@@ -113,7 +119,9 @@ exports.deleteAll = async (req, res) => {
 
     res.json({ message: "Deleted successfully!" });
   } catch (error) {
-    res.status(500).json({ message: "Could not delete files!" });
+    res
+      .status(STATUS_CODES.SERVER_ERROR)
+      .json({ message: "Could not delete files!" });
   }
 };
 
@@ -124,7 +132,43 @@ exports.createDirectories = async (req, res, next) => {
 
     next();
   } catch (error) {
-    res.status(500).json({ message: "Could not create directories" });
+    res
+      .status(STATUS_CODES.SERVER_ERROR)
+      .json({ message: "Could not create directories" });
+  }
+};
+
+exports.trash = async (req, res) => {
+  try {
+    if (!req?.body?.ids || req?.body?.ids == "") {
+      return res
+        .status(STATUS_CODES.PARAM_MISSING)
+        .json({ message: "ids parameter is missing!" });
+    }
+    const idsArr = req?.body?.ids
+      .split(",")
+      .map((id) => mongoose.Types.ObjectId(id));
+    console.log("idsArr: ", idsArr);
+
+    let queryRes = await Photo.updateMany(
+      {
+        _id: {
+          $in: idsArr,
+        },
+      },
+      {
+        trashed: true,
+      }
+    );
+
+    res.json({
+      message: `${queryRes.modifiedCount} Photos trashed successfully!`,
+    });
+  } catch (error) {
+    console.log("Error: ", error);
+    res
+      .status(STATUS_CODES.SERVER_ERROR)
+      .json({ message: "Could not trash files!" });
   }
 };
 

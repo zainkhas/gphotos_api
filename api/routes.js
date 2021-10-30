@@ -24,4 +24,7 @@ router.post(
 //Delete all photos and thumbnails
 router.post("/deleteAll", photosController.deleteAll);
 
+//Trash multiple Photos
+router.post("/photos/trash", photosController.trash);
+
 module.exports = router;

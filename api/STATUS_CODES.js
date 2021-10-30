@@ -1,0 +1,5 @@
+export const STATUS_CODES = {
+  SUCCESS: 200,
+  PARAM_MISSING: 422,
+  SERVER_ERROR: 500,
+};
