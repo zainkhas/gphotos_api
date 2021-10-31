@@ -119,6 +119,7 @@ exports.deleteAll = async (req, res) => {
 
     res.json({ message: "Deleted successfully!" });
   } catch (error) {
+    console.log("Error: ", error);
     res
       .status(STATUS_CODES.SERVER_ERROR)
       .json({ message: "Could not delete files!" });
