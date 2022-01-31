@@ -47,6 +47,13 @@ exports.getPhotos = async (req, res) => {
   res.send(JSON.stringify(arrPhotos));
 };
 
+exports.getTrashedPhotos = async (req, res) => {
+  let arrPhotos = await Photo.find({
+    trashed: true,
+  });
+  res.send(JSON.stringify(arrPhotos));
+};
+
 exports.generateThumbnailsAndExif = async (req, res) => {
   try {
     let promises = req?.files?.map(async (image) => {

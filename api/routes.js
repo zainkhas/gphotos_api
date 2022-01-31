@@ -13,6 +13,9 @@ router.get("/", (req, res) => {
 //List all Photo URLs
 router.post("/photos", photosController.getPhotos);
 
+//List all Photo URLs that are trashed
+router.post("/trashedphotos", photosController.getTrashedPhotos);
+
 //Upload multiple photos
 router.post(
   "/photos/upload",
