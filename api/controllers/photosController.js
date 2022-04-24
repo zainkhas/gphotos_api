@@ -9,10 +9,12 @@ const {
   formatBytes,
   convertCoordinate,
   toFixedTrunc,
+  deleteFile,
 } = require("../utils/Utils");
 const multer = require("multer");
 const path = require("path");
 const Photo = require("../models/photoModel");
+const Faces = require("../models/facesModel");
 import moment from "moment";
 import { existsSync } from "fs";
 import { STATUS_CODES } from "../STATUS_CODES";
@@ -54,7 +56,7 @@ exports.getTrashedPhotos = async (req, res) => {
   res.send(JSON.stringify(arrPhotos));
 };
 
-exports.generateThumbnailsAndExif = async (req, res) => {
+exports.generateThumbnailsAndExif = async (req, res, next) => {
   try {
     let promises = req?.files?.map(async (image) => {
       await generateThumbnail(image);
@@ -63,7 +65,9 @@ exports.generateThumbnailsAndExif = async (req, res) => {
       let date = moment();
 
       if (exif) {
-        const dateCreated = exif?.exif?.CreateDate;
+        const dateCreated = exif?.exif?.CreateDate
+          ? exif?.exif?.CreateDate
+          : moment().format("YYYY-MM-DD HH:mm:ss");
         date = moment(dateCreated, "YYYY-MM-DD HH:mm:ss");
         const width = exif?.image?.ImageHeight;
         const height = exif?.image?.ImageWidth;
@@ -106,9 +110,17 @@ exports.generateThumbnailsAndExif = async (req, res) => {
     });
 
     await Promise.all(promises);
-    res.json({ message: "Images uploaded!" });
+
+    next();
   } catch (error) {
     console.log("Error: ", error);
+
+    //Delete files so that they can be uploaded again
+    try {
+      await deleteFile(UPLOAD_PATH + image?.filename);
+      await deleteFile(UPLOAD_PATH + "thumb_" + image?.filename);
+    } catch (error) {}
+
     res
       .status(STATUS_CODES.SERVER_ERROR)
       .json({ message: "Something went wrong" });
@@ -117,16 +129,23 @@ exports.generateThumbnailsAndExif = async (req, res) => {
 
 exports.deleteAll = async (req, res) => {
   try {
-    await deleteFilesInDir(UPLOAD_PATH);
-    await deleteFilesInDir(THUMBNAIL_PATH);
+    try {
+      await deleteFilesInDir(UPLOAD_PATH);
+      await deleteFilesInDir(THUMBNAIL_PATH);
+    } catch (error) {
+      console.log("Error deleting files: ", error);
+    }
 
-    let deleteRes = await Photo.deleteMany();
+    let deletePhotosRes = await Photo.deleteMany();
+    let deleteFacesRes = await Faces.deleteMany();
 
-    console.log("Delete res: ", deleteRes);
+    console.log("Delete Photos res: ", deletePhotosRes);
+    console.log("Delete Faces res: ", deleteFacesRes);
 
     res.json({ message: "Deleted successfully!" });
   } catch (error) {
     console.log("Error: ", error);
+
     res
       .status(STATUS_CODES.SERVER_ERROR)
       .json({ message: "Could not delete files!" });
@@ -178,6 +197,29 @@ exports.trash = async (req, res) => {
       .status(STATUS_CODES.SERVER_ERROR)
       .json({ message: "Could not trash files!" });
   }
+};
+
+exports.saveFaceDescriptors = async (req, res) => {
+  console.log("Faces: ", req.body.faces);
+
+  const facesObject = JSON.parse(req.body.faces);
+
+  let labelsArr = Object.keys(facesObject);
+
+  console.log("labelsArr: ", labelsArr);
+
+  for (let i = 0; i < labelsArr.length; i++) {
+    const label = labelsArr[i];
+    let face = new Faces({
+      label,
+      descriptors: facesObject[label],
+    });
+
+    let res = await face.save();
+    console.log("Face saved at id: ", res?._id);
+  }
+
+  res.json({ message: "Images uploaded!" });
 };
 
 exports.uploadPhotos = multer({

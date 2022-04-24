@@ -21,7 +21,8 @@ router.post(
   "/photos/upload",
   photosController.createDirectories,
   photosController.uploadPhotos,
-  photosController.generateThumbnailsAndExif
+  photosController.generateThumbnailsAndExif,
+  photosController.saveFaceDescriptors
 );
 
 //Delete all photos and thumbnails

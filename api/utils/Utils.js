@@ -65,6 +65,11 @@ export const deleteFilesInDir = async (directory) => {
   });
 };
 
+export const deleteFile = async (path) => {
+  const fsPromises = require("fs").promises;
+  return fsPromises.unlink(path);
+};
+
 export const createDirectory = (directory) => {
   const fsPromises = require("fs").promises;
   return fsPromises.mkdir(directory, {
@@ -125,6 +130,9 @@ export const convertCoordinate = (coordinate) => {
 };
 
 export const toFixed = (x) => {
+  if (!x) {
+    x = 0;
+  }
   if (Math.abs(x) < 1.0) {
     var e = parseInt(x.toString().split("e-")[1]);
     if (e) {
